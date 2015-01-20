@@ -202,11 +202,12 @@ parseExpr :: Parser LispVal
 parseExpr = parseNumber
         <|> parseBool
         <|> parseCharacter
-        <|> parseString
-        <|> parseAtom
         <|> parseLists
         <|> parseQuasi
         <|> parseUnQuote
+        <|> parseVector
+        <|> parseString
+        <|> parseAtom
 
 -- Main --
 
