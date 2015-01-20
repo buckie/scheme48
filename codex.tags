@@ -4283,33 +4283,39 @@ whiteSpace	/Users/wjm/repos/scheme48/.cabal-sandbox/packages/parsec/3.1.8/parsec
 !_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
 !_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
 !_TAG_PROGRAM_NAME	hasktags
-Atom	/Users/wjm/repos/scheme48/src/Main.hs	/^data LispVal = Atom String$/;"	d	line:10
-Bool	/Users/wjm/repos/scheme48/src/Main.hs	/^             | Bool Bool$/;"	cons	line:15
-Character	/Users/wjm/repos/scheme48/src/Main.hs	/^             | Character Char$/;"	cons	line:16
-DottedList	/Users/wjm/repos/scheme48/src/Main.hs	/^             | DottedList [LispVal] LispVal$/;"	cons	line:12
-LispVal	/Users/wjm/repos/scheme48/src/Main.hs	/^data LispVal = Atom String$/;"	d	line:10
-List	/Users/wjm/repos/scheme48/src/Main.hs	/^             | List [LispVal]$/;"	cons	line:11
+Atom	/Users/wjm/repos/scheme48/src/Main.hs	/^data LispVal = Atom String$/;"	d	line:11
+Bool	/Users/wjm/repos/scheme48/src/Main.hs	/^             | Bool Bool$/;"	cons	line:16
+Character	/Users/wjm/repos/scheme48/src/Main.hs	/^             | Character Char$/;"	cons	line:17
+DottedList	/Users/wjm/repos/scheme48/src/Main.hs	/^             | DottedList [LispVal] LispVal$/;"	cons	line:13
+Float	/Users/wjm/repos/scheme48/src/Main.hs	/^             | Float Float$/;"	cons	line:18
+LispVal	/Users/wjm/repos/scheme48/src/Main.hs	/^data LispVal = Atom String$/;"	d	line:11
+List	/Users/wjm/repos/scheme48/src/Main.hs	/^             | List [LispVal]$/;"	cons	line:12
 Main	/Users/wjm/repos/scheme48/src/Main.hs	/^module Main where$/;"	m	line:3
-Number	/Users/wjm/repos/scheme48/src/Main.hs	/^             | Number Integer$/;"	cons	line:13
-String	/Users/wjm/repos/scheme48/src/Main.hs	/^             | String String$/;"	cons	line:14
-bin2dig	/Users/wjm/repos/scheme48/src/Main.hs	/^bin2dig :: String -> Integer$/;"	ft	line:92
-bin2dig'	/Users/wjm/repos/scheme48/src/Main.hs	/^bin2dig' :: Num a => a -> String -> a$/;"	ft	line:95
-escapedChars	/Users/wjm/repos/scheme48/src/Main.hs	/^escapedChars :: Parser Char$/;"	ft	line:27
-hex2dig	/Users/wjm/repos/scheme48/src/Main.hs	/^hex2dig :: (Num a, Eq a) => String -> a$/;"	ft	line:80
+Number	/Users/wjm/repos/scheme48/src/Main.hs	/^             | Number Integer$/;"	cons	line:14
+Ratio	/Users/wjm/repos/scheme48/src/Main.hs	/^             | Ratio Rational$/;"	cons	line:19
+String	/Users/wjm/repos/scheme48/src/Main.hs	/^             | String String$/;"	cons	line:15
+bin2dig	/Users/wjm/repos/scheme48/src/Main.hs	/^bin2dig :: String -> Integer$/;"	ft	line:95
+bin2dig'	/Users/wjm/repos/scheme48/src/Main.hs	/^bin2dig' :: Num a => a -> String -> a$/;"	ft	line:98
+escapedChars	/Users/wjm/repos/scheme48/src/Main.hs	/^escapedChars :: Parser Char$/;"	ft	line:30
+hex2dig	/Users/wjm/repos/scheme48/src/Main.hs	/^hex2dig :: (Num a, Eq a) => String -> a$/;"	ft	line:83
 main	/Users/wjm/repos/scheme48/Setup.hs	/^main = defaultMain$/;"	fi	line:2
-main	/Users/wjm/repos/scheme48/src/Main.hs	/^main :: IO ()$/;"	ft	line:122
-oct2dig	/Users/wjm/repos/scheme48/src/Main.hs	/^oct2dig :: (Num a, Eq a) => String -> a$/;"	ft	line:86
-parseAtom	/Users/wjm/repos/scheme48/src/Main.hs	/^parseAtom :: Parser LispVal$/;"	ft	line:59
-parseBin	/Users/wjm/repos/scheme48/src/Main.hs	/^parseBin :: Parser LispVal$/;"	ft	line:89
-parseBool	/Users/wjm/repos/scheme48/src/Main.hs	/^parseBool :: Parser LispVal$/;"	ft	line:107
-parseCharacter	/Users/wjm/repos/scheme48/src/Main.hs	/^parseCharacter :: Parser LispVal$/;"	ft	line:47
-parseDigit1	/Users/wjm/repos/scheme48/src/Main.hs	/^parseDigit1 :: Parser LispVal$/;"	ft	line:71
-parseDigit2	/Users/wjm/repos/scheme48/src/Main.hs	/^parseDigit2 :: Parser LispVal$/;"	ft	line:74
-parseExpr	/Users/wjm/repos/scheme48/src/Main.hs	/^parseExpr :: Parser LispVal$/;"	ft	line:110
-parseHex	/Users/wjm/repos/scheme48/src/Main.hs	/^parseHex :: Parser LispVal$/;"	ft	line:77
-parseNumber	/Users/wjm/repos/scheme48/src/Main.hs	/^parseNumber :: Parser LispVal$/;"	ft	line:68
-parseOct	/Users/wjm/repos/scheme48/src/Main.hs	/^parseOct :: Parser LispVal$/;"	ft	line:83
-parseString	/Users/wjm/repos/scheme48/src/Main.hs	/^parseString :: Parser LispVal$/;"	ft	line:40
-readExpr	/Users/wjm/repos/scheme48/src/Main.hs	/^readExpr :: String -> String$/;"	ft	line:117
-spaces	/Users/wjm/repos/scheme48/src/Main.hs	/^spaces :: Parser ()$/;"	ft	line:22
-symbol	/Users/wjm/repos/scheme48/src/Main.hs	/^symbol :: Parser Char$/;"	ft	line:19
+main	/Users/wjm/repos/scheme48/src/Main.hs	/^main :: IO ()$/;"	ft	line:154
+oct2dig	/Users/wjm/repos/scheme48/src/Main.hs	/^oct2dig :: (Num a, Eq a) => String -> a$/;"	ft	line:89
+parseAtom	/Users/wjm/repos/scheme48/src/Main.hs	/^parseAtom :: Parser LispVal$/;"	ft	line:62
+parseBin	/Users/wjm/repos/scheme48/src/Main.hs	/^parseBin :: Parser LispVal$/;"	ft	line:92
+parseBool	/Users/wjm/repos/scheme48/src/Main.hs	/^parseBool :: Parser LispVal$/;"	ft	line:138
+parseCharacter	/Users/wjm/repos/scheme48/src/Main.hs	/^parseCharacter :: Parser LispVal$/;"	ft	line:50
+parseComplex	/Users/wjm/repos/scheme48/src/Main.hs	/^parseComplex :: Parser LispVal$/;"	ft	line:128
+parseDigit1	/Users/wjm/repos/scheme48/src/Main.hs	/^parseDigit1 :: Parser LispVal$/;"	ft	line:74
+parseDigit2	/Users/wjm/repos/scheme48/src/Main.hs	/^parseDigit2 :: Parser LispVal$/;"	ft	line:77
+parseExpr	/Users/wjm/repos/scheme48/src/Main.hs	/^parseExpr :: Parser LispVal$/;"	ft	line:141
+parseFloat	/Users/wjm/repos/scheme48/src/Main.hs	/^parseFloat :: Parser LispVal$/;"	ft	line:110
+parseHex	/Users/wjm/repos/scheme48/src/Main.hs	/^parseHex :: Parser LispVal$/;"	ft	line:80
+parseNumber	/Users/wjm/repos/scheme48/src/Main.hs	/^parseNumber :: Parser LispVal$/;"	ft	line:71
+parseOct	/Users/wjm/repos/scheme48/src/Main.hs	/^parseOct :: Parser LispVal$/;"	ft	line:86
+parseRatio	/Users/wjm/repos/scheme48/src/Main.hs	/^parseRatio :: Parser LispVal$/;"	ft	line:119
+parseString	/Users/wjm/repos/scheme48/src/Main.hs	/^parseString :: Parser LispVal$/;"	ft	line:43
+readExpr	/Users/wjm/repos/scheme48/src/Main.hs	/^readExpr :: String -> String$/;"	ft	line:149
+spaces	/Users/wjm/repos/scheme48/src/Main.hs	/^spaces :: Parser ()$/;"	ft	line:25
+symbol	/Users/wjm/repos/scheme48/src/Main.hs	/^symbol :: Parser Char$/;"	ft	line:22
+toDouble	/Users/wjm/repos/scheme48/src/Main.hs	/^toDouble :: LispVal -> Double$/;"	ft	line:132

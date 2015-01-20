@@ -4,6 +4,8 @@ module Main where
 
 import Control.Monad
 import Numeric
+import Data.Ratio
+import Data.Complex
 import Text.ParserCombinators.Parsec hiding (spaces)
 import System.Environment
 
@@ -14,6 +16,9 @@ data LispVal = Atom String
              | String String
              | Bool Bool
              | Character Char
+             | Float Double
+             | Ratio Rational
+             | Complex (Complex Double)
              deriving (Show)
 
 symbol :: Parser Char
@@ -38,7 +43,7 @@ escapedChars = do
 
 
 parseString :: Parser LispVal
-parseString = do
+parseString = try $ do
                 _ <- char '"'
                 x <- many (noneOf "\"")
                 _ <- char '"'
@@ -57,7 +62,7 @@ parseCharacter = do
 -- Atoms --
 
 parseAtom :: Parser LispVal
-parseAtom = do
+parseAtom = try $ do
                 first <- letter <|> symbol
                 rest <- many (letter <|> digit <|> symbol)
                 let atom = first:rest
@@ -66,7 +71,14 @@ parseAtom = do
 --- Numbers ---
 
 parseNumber :: Parser LispVal
-parseNumber = parseDigit1 <|> parseDigit2 <|> parseHex <|> parseOct <|> parseBin
+parseNumber = try parseComplex
+           <|> try parseRatio
+           <|> try parseFloat
+           <|> try parseDigit1
+           <|> try parseDigit2
+           <|> try parseHex
+           <|> try parseOct
+           <|> try parseBin
 
 parseDigit1 :: Parser LispVal
 parseDigit1 = try $ liftM (Number . read) (many1 digit)
@@ -102,17 +114,80 @@ bin2dig' d (x:xs) = let
                         o = 2 * d + n
                     in bin2dig' o xs
 
+-- Floats --
+
+parseFloat :: Parser LispVal
+parseFloat = try $ do
+  i <- many1 digit
+  _ <- char '.'
+  d <- many1 digit
+  return $ Float $ fst . head $ readFloat $ i ++ "." ++ d
+
+-- Ratios --
+
+parseRatio :: Parser LispVal
+parseRatio = try $ do
+  n <- many1 digit
+  _ <- char '/'
+  d <- many1 digit
+  return $ Ratio $ (read n) % (read d)
+
+-- Complex --
+
+parseComplex :: Parser LispVal
+parseComplex = try $ do
+  x <- (try parseFloat <|> parseDigit1)
+  _ <- char '+'
+  y <- (try parseFloat <|> parseDigit1)
+  _ <- char 'i'
+  return $ Complex $ toDouble x :+ toDouble y
+
+toDouble :: LispVal -> Double
+toDouble (Float f) = f
+toDouble (Number n) = fromIntegral n
+toDouble e = error $ "wrong type: " ++ show e
+
 -- Booleans --
 
 parseBool :: Parser LispVal
-parseBool = char '#' >> ((char 't' >> return (Bool True)) <|> (char 'f' >> return (Bool False)))
+parseBool = try $ char '#' >>
+  ((char 't' >> return (Bool True)) <|> (char 'f' >> return (Bool False)))
+
+-- Lists --
+
+parseList :: Parser LispVal
+parseList = liftM List $ sepBy parseExpr spaces
+
+parseDottedList :: Parser LispVal
+parseDottedList = do
+  h <- endBy parseExpr spaces
+  t <- char '.' >> spaces >> parseExpr
+  return $ DottedList h t
+
+parseQuoted :: Parser LispVal
+parseQuoted = do
+  _ <- char '\''
+  x <- parseExpr
+  return $ List [Atom "quote", x]
+
+parseLists :: Parser LispVal
+parseLists = try $ do
+  _ <- char '('
+  x <- try parseList <|> parseDottedList
+  _ <- char ')'
+  return x
+
+-- Core Parser --
 
 parseExpr :: Parser LispVal
-parseExpr = parseAtom
+parseExpr = parseNumber
+        <|> parseBool
+        <|> parseCharacter
         <|> parseString
-        <|> try parseBool
-        <|> try parseNumber
-        <|> try parseCharacter
+        <|> parseAtom
+        <|> parseLists
+
+-- Main --
 
 readExpr :: String -> String
 readExpr input = case parse parseExpr "lisp" input of
