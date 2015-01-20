@@ -25,10 +25,10 @@ spaces = skipMany1 space
 -- Strings --
 
 escapedChars :: Parser Char
-escapedChars = do 
-                _ <- char '\\' 
+escapedChars = do
+                _ <- char '\\'
                 x <- oneOf "\\\"nrt"
-                return $ case x of 
+                return $ case x of
                             '\\' -> x
                             '"'  -> x
                             'n'  -> '\n'
@@ -45,9 +45,9 @@ parseString = do
                 return $ String x
 
 parseCharacter :: Parser LispVal
-parseCharacter = do 
+parseCharacter = do
                     try $ string "#\\"
-                    x <- try (string "newline" <|> string "space") 
+                    x <- try (string "newline" <|> string "space")
                         <|> do { v <- anyChar; notFollowedBy alphaNum; return [v] }
                     return $ Character $ case x of
                             "newline" -> '\n'
@@ -69,10 +69,10 @@ parseNumber :: Parser LispVal
 parseNumber = parseDigit1 <|> parseDigit2 <|> parseHex <|> parseOct <|> parseBin
 
 parseDigit1 :: Parser LispVal
-parseDigit1 = liftM (Number . read) (many1 digit)
+parseDigit1 = try $ liftM (Number . read) (many1 digit)
 
 parseDigit2 :: Parser LispVal
-parseDigit2 = string "#d" >> parseDigit1
+parseDigit2 = try $ string "#d" >> parseDigit1
 
 parseHex :: Parser LispVal
 parseHex =  try $ liftM (Number . hex2dig) (string "#x" >> many1 hexDigit)
@@ -95,7 +95,7 @@ bin2dig = bin2dig' 0
 bin2dig' :: Num a => a -> String -> a
 bin2dig' d ""     = d
 bin2dig' d (x:xs) = let
-                        n = case x of 
+                        n = case x of
                                 '0' -> 0
                                 '1' -> 1
                                 _   -> error "Impossible"
