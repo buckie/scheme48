@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-do-bind #-}
 
-module Main where
+module Scheme48.Parsers where
 
 import Control.Monad
 import Numeric
@@ -215,8 +215,3 @@ readExpr :: String -> String
 readExpr input = case parse parseExpr "lisp" input of
     Left err -> "No Match: " ++ show err
     Right val -> "Found Value: " ++ show val
-
-main :: IO ()
-main = do
-    args <- getArgs
-    putStrLn $ readExpr $ head args
