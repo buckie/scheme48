@@ -6,6 +6,7 @@ import Control.Monad
 import Numeric
 import Data.Ratio
 import Data.Complex
+import Data.Array
 import Text.ParserCombinators.Parsec hiding (spaces)
 import System.Environment
 
@@ -19,6 +20,7 @@ data LispVal = Atom String
              | Float Double
              | Ratio Rational
              | Complex (Complex Double)
+             | Vector (Array Int LispVal)
              deriving (Show)
 
 symbol :: Parser Char
@@ -177,6 +179,23 @@ parseLists = try $ do
   _ <- char ')'
   return x
 
+-- quasiquote --
+
+parseQuasi :: Parser LispVal
+parseQuasi = try $ liftM (\x -> List [Atom "quasiquote", x]) (char '`' >> parseExpr)
+
+parseUnQuote :: Parser LispVal
+parseUnQuote = try $ liftM (\x -> List [Atom "unquote", x]) (char ',' >> parseExpr)
+
+-- Vector --
+
+parseVector :: Parser LispVal
+parseVector = try $ do
+  _ <- string "#("
+  v <- sepBy parseExpr spaces
+  _ <- char ')'
+  return $ Vector $ listArray (0, (length v - 1)) v
+
 -- Core Parser --
 
 parseExpr :: Parser LispVal
@@ -186,6 +205,8 @@ parseExpr = parseNumber
         <|> parseString
         <|> parseAtom
         <|> parseLists
+        <|> parseQuasi
+        <|> parseUnQuote
 
 -- Main --
 
