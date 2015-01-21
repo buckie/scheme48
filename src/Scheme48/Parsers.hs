@@ -197,9 +197,5 @@ parseExpr = parseNumber
         <|> parseString
         <|> parseAtom
 
--- Main --
-
-readExpr :: String -> String
-readExpr input = case parse parseExpr "lisp" input of
-    Left err -> "No Match: " ++ show err
-    Right val -> "Found Value: " ++ show val
+parseExprs :: String -> Either ParseError LispVal
+parseExprs = parse parseExpr "lisp"

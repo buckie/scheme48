@@ -1,9 +1,8 @@
 module Main where
 
-import Scheme48.Parsers (readExpr)
+import Scheme48.Eval
 import System.Environment
 
 main :: IO ()
-main = do
-  args <-  getArgs
-  putStrLn $ readExpr $ head args
+main = getArgs
+        >>= print . eval . readExpr . head
