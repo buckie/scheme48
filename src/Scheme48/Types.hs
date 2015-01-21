@@ -34,7 +34,9 @@ showVal (Character c) = show c
 showVal (Float n) = show n
 showVal (Ratio r) = show r
 showVal (Complex c) = (show $ realPart c) ++ " + " ++ (show $ imagPart c) ++ "i"
-showVal (Vector v) = show $ elems v
+showVal (Vector v) = "#(" ++ unwordsList (elems v) ++ ")"
+
+testVec = Vector $ listArray (0,3) (map Number [0..4])
 
 unwordsList :: [LispVal] -> String
 unwordsList = unwords . map showVal
