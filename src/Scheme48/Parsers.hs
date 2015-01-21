@@ -155,7 +155,7 @@ parseDottedList = do
   return $ DottedList h t
 
 parseQuoted :: Parser LispVal
-parseQuoted = do
+parseQuoted = try $ do
   _ <- char '\''
   x <- parseExpr
   return $ List [Atom "quote", x]
@@ -196,6 +196,7 @@ parseExpr = parseNumber
         <|> parseVector
         <|> parseString
         <|> parseAtom
+        <|> parseQuoted
 
 parseExprs :: String -> Either ParseError LispVal
 parseExprs = parse parseExpr "lisp"
