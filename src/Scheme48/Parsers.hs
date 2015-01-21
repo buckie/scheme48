@@ -2,6 +2,8 @@
 
 module Scheme48.Parsers where
 
+import Scheme48.Types
+
 import Control.Monad
 import Numeric
 import Data.Ratio
@@ -9,19 +11,6 @@ import Data.Complex
 import Data.Array
 import Text.ParserCombinators.Parsec hiding (spaces)
 import System.Environment
-
-data LispVal = Atom String
-             | List [LispVal]
-             | DottedList [LispVal] LispVal
-             | Number Integer
-             | String String
-             | Bool Bool
-             | Character Char
-             | Float Double
-             | Ratio Rational
-             | Complex (Complex Double)
-             | Vector (Array Int LispVal)
-             deriving (Show)
 
 symbol :: Parser Char
 symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
