@@ -1,6 +1,6 @@
 module Main where
 
-import Scheme48.Parsers
+import Scheme48.Parsers (readExpr)
 import System.Environment
 
 main :: IO ()

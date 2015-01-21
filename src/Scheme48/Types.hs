@@ -30,10 +30,12 @@ showVal (Bool True)  = "#t"
 showVal (Bool False) = "#f"
 showVal (List c) = "(" ++ unwordsList c ++ ")"
 showVal (DottedList x xs) = "(" ++ unwordsList x ++ " . " ++ showVal xs ++ ")"
-showVal c = show c
+showVal (Character c) = show c
+showVal (Float n) = show n
+showVal (Ratio r) = show r
+showVal (Complex c) = (show $ realPart c) ++ " + " ++ (show $ imagPart c) ++ "i"
+showVal (Vector v) = show $ elems v
 
 unwordsList :: [LispVal] -> String
 unwordsList = unwords . map showVal
-
-
 

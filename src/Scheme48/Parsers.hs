@@ -10,7 +10,6 @@ import Data.Ratio
 import Data.Complex
 import Data.Array
 import Text.ParserCombinators.Parsec hiding (spaces)
-import System.Environment
 
 symbol :: Parser Char
 symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
