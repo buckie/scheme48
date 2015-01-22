@@ -4,5 +4,4 @@ import Scheme48.Eval
 import System.Environment
 
 main :: IO ()
-main = getArgs
-        >>= print . eval . readExpr . head
+main = getArgs >>= print . eval . readExpr . head
