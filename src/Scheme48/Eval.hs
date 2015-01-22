@@ -40,7 +40,9 @@ primitives = [("+", numericBinop (+)),
               ("character?",unaryOp characterp),
               ("float?",unaryOp floatp),
               ("ratio",unaryOp ratiop),
-              ("complex?",unaryOp complexp)
+              ("complex?",unaryOp complexp),
+              ("string->symbol", unaryOp stringToSymbol),
+              ("symbol->string", unaryOp symbolToString)
               ]
 
 -- Numeric Operations --
@@ -107,3 +109,13 @@ ratiop _ = Bool False
 complexp :: LispVal -> LispVal
 complexp (Complex _) = Bool True
 complexp _ = Bool False
+
+-- Symbol Conversion Operations --
+
+stringToSymbol :: LispVal -> LispVal
+stringToSymbol (String s) = Atom s
+stringToSymbol _ = Atom ""
+
+symbolToString :: LispVal -> LispVal
+symbolToString (Atom a) = String a
+symbolToString _ = String ""
