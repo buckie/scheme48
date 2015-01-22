@@ -62,24 +62,26 @@ primitives = [("+", numericBinop (+)),
 
 -- Numeric Operations --
 
-numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> LispVal
-numericBinop op params = Number $ foldl1 op $ map unpackNum params
+numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> ThrowsError LispVal
+numericBinop _ []      = throwError $ NumArgs 2 []
+numericBinop _ s@[_]   = throwError $ NumArgs 2 s
+numericBinop op params = mapM unpackNum params >>= return . Number . foldl1 op
 
-unpackNum :: LispVal -> Integer
-unpackNum (Number n) = n
-unpackNum (String n) = let parsed = reads n :: [(Integer, String)] in
+unpackNum :: LispVal -> ThrowsError Integer
+unpackNum (Number n) = return n
+unpackNum (String n) = let parsed = reads n in
                             if null parsed
-                              then 0
-                              else fst $ parsed !! 0
+                              then throwError $ TypeMismatch "number" $ String n
+                              else return $ fst $ parsed !! 0
 unpackNum (List [n]) = unpackNum n
-unpackNum _ = 0
+unpackNum notNum     = throwError $ TypeMismatch "number" notNum
 
 -- Type Check Operations --
 
-unaryOp :: (LispVal -> LispVal) -> [LispVal] -> LispVal
-unaryOp f [v] = f v
-unaryOp _ _ = error "incorrect application of unary operator"
-
+unaryOp :: (LispVal -> LispVal) -> [LispVal] -> ThrowsError LispVal
+unaryOp f [v] = return $ f v
+unaryOp _ [] = throwError $ NumArgs 1 []
+unaryOp _ _ = error "incorrect application of unaryOp"
 
 boolp :: LispVal -> LispVal
 boolp (Bool _) = Bool True
