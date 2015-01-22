@@ -81,7 +81,7 @@ unpackNum notNum     = throwError $ TypeMismatch "number" notNum
 unaryOp :: (LispVal -> LispVal) -> [LispVal] -> ThrowsError LispVal
 unaryOp f [v] = return $ f v
 unaryOp _ [] = throwError $ NumArgs 1 []
-unaryOp _ _ = error "incorrect application of unaryOp"
+unaryOp _ _ = throwError $ Default "Incorrect application of unary operator"
 
 boolp :: LispVal -> LispVal
 boolp (Bool _) = Bool True
