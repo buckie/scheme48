@@ -2,27 +2,42 @@
 
 module Scheme48.Eval where
 
+import Scheme48.Error (LispError(..), ThrowsError)
 import Scheme48.Types (LispVal(..))
 import Scheme48.Parsers (parseExprs)
 
+import Control.Monad.Except
+
 -- Evaluation --
 
-eval :: LispVal -> LispVal
-eval (List [Atom "quote", val]) = val
-eval (List (Atom func:args)) = apply func $ map eval args
-eval val = val
+eval :: LispVal -> ThrowsError LispVal
+eval (List [Atom "quote", val]) = return val
+eval (List (Atom func:args)) = mapM eval args >>= apply func
+eval v@(String _) = return v
+eval v@(Number _) = return v
+eval v@(Bool _) = return v
+eval v@(Character _) = return v
+eval v@(Float _) = return v
+eval v@(Atom _) = return v
+eval v@(Ratio _) = return v
+eval v@(Complex _) = return v
+eval v@(Vector _) = return v
+eval v@(DottedList _ _) = return v
+eval badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
-apply :: String -> [LispVal] -> LispVal
-apply fn args = maybe (Bool False) ($ args) $ lookup fn primitives
+apply :: String -> [LispVal] -> ThrowsError LispVal
+apply fn args = maybe (throwError $ NotFunction "Unrecognized primative function args" fn)
+                      ($ args)
+                      (lookup fn primitives)
 
-readExpr :: String -> LispVal
+readExpr :: String -> ThrowsError LispVal
 readExpr input = case parseExprs input of
-    Left err -> String $ "No Match: " ++ show err
-    Right val -> val
+    Left err -> throwError $ Parser err
+    Right val -> return val
 
 -- Primative Operations --
 
-primitives :: [(String, [LispVal] -> LispVal)]
+primitives :: [(String, [LispVal] -> ThrowsError LispVal)]
 primitives = [("+", numericBinop (+)),
               ("-", numericBinop (-)),
               ("*", numericBinop (*)),
