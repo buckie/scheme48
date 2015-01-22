@@ -57,7 +57,7 @@ executable scheme48
   -- other-extensions:    
   
   -- Other library packages from which modules are imported.
-  build-depends:       base >=4.7 && <4.8, parsec >=3.1 && <3.2, array
+  build-depends:       base >=4.7 && <4.8, parsec >=3.1 && <3.2, array, mtl
   
   -- Directories containing source files.
   hs-source-dirs:      src

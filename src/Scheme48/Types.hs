@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-do-bind #-}
 
-module Scheme48.Types (LispVal(..)) where
+module Scheme48.Types (LispVal(..), unwordsList) where
 
 import Data.Ratio ()
 import Data.Complex
