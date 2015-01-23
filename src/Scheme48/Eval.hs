@@ -1,3 +1,4 @@
+{-# LANGUAGE ExistentialQuantification #-}
 {-# OPTIONS_GHC -fno-warn-unused-do-bind #-}
 
 module Scheme48.Eval where
@@ -16,7 +17,8 @@ eval (List [Atom "if", cond, t, f]) =
                      do result <- eval cond
                         case result of
                              Bool False -> eval f
-                             _ -> eval t
+                             Bool True -> eval t
+                             _ -> throwError $ TypeMismatch "bool" cond
 eval (List (Atom func:args)) = mapM eval args >>= apply func
 eval v@(String _) = return v
 eval v@(Number _) = return v
@@ -75,10 +77,74 @@ primitives = [("+", numericBinop (+)),
               ("ratio",unaryOp ratiop),
               ("complex?",unaryOp complexp),
               ("string->symbol", unaryOp stringToSymbol),
-              ("symbol->string", unaryOp symbolToString)
-              ]
+              ("symbol->string", unaryOp symbolToString),
+              ("car", car),
+              ("cdr", cdr),
+              ("cons", cons),
+              ("eq?", eqv),
+              ("eqv?", eqv),
+              ("equal?", equal)]
+
+car :: [LispVal] -> ThrowsError LispVal
+car [List (x : _ )]         = return x
+car [DottedList (x : _ ) _] = return x
+car [badArg]                = throwError $ TypeMismatch "pair" badArg
+car badArgList              = throwError $ NumArgs 1 badArgList
+
+cdr :: [LispVal] -> ThrowsError LispVal
+cdr [List (_ : xs)]         = return $ List xs
+cdr [DottedList [_] x]      = return x
+cdr [DottedList (_ : xs) x] = return $ DottedList xs x
+cdr [badArg]                = throwError $ TypeMismatch "pair" badArg
+cdr badArgList              = throwError $ NumArgs 1 badArgList
+
+cons :: [LispVal] -> ThrowsError LispVal
+cons [x1, List []]            = return $ List [x1]
+cons [x, List xs]             = return $ List $ x:xs
+cons [x, DottedList xs xlast] = return $ DottedList (x:xs) xlast
+cons [x1, x2]                 = return $ DottedList [x1] x2
+cons badArgs                  = throwError $ NumArgs 2 badArgs
+
+eqv :: [LispVal] -> ThrowsError LispVal
+eqv [(Bool arg1), (Bool arg2)]             = return $ Bool $ arg1 == arg2
+eqv [(Number arg1), (Number arg2)]         = return $ Bool $ arg1 == arg2
+eqv [(String arg1), (String arg2)]         = return $ Bool $ arg1 == arg2
+eqv [(Atom arg1), (Atom arg2)]             = return $ Bool $ arg1 == arg2
+eqv [(DottedList xs x), (DottedList ys y)] = eqv [List $ xs ++ [x], List $ ys ++ [y]]
+eqv [xs@(List _), ys@(List _)] = eqvList eqv [xs, ys]
+eqv [_, _]                                 = return $ Bool False
+eqv badArgList                             = throwError $ NumArgs 2 badArgList
+
+equal :: [LispVal] -> ThrowsError LispVal
+equal [xs@(List _), ys@(List _)] = eqvList equal [xs, ys]
+equal [(DottedList xs x), (DottedList ys y)] = equal [List $ xs ++ [x], List $ ys ++ [y]]
+equal [arg1, arg2] = do
+      primitiveEquals <- liftM or $ mapM (unpackEquals arg1 arg2)
+                         [AnyUnpacker unpackNum, AnyUnpacker unpackStr, AnyUnpacker unpackBool]
+      eqvEquals <- eqv [arg1, arg2]
+      return $ Bool $ (primitiveEquals || let (Bool x) = eqvEquals in x)
+equal badArgList = throwError $ NumArgs 2 badArgList
+
+eqvList :: Monad m => ([LispVal] -> Either t LispVal) -> [LispVal] -> m LispVal
+eqvList fn [(List xs), (List ys)] =
+    return $ Bool $ (length xs == length ys) && (all eqvPair $ zip xs ys)
+      where eqvPair (x, y) = case fn [x, y] of
+                                Left _ -> False
+                                Right (Bool v) -> v
+                                _ -> error "unreachable"
+
+eqvList _ _ = error "implementation error!"
 
 -- Unpacking Functions --
+
+data Unpacker = forall a. Eq a => AnyUnpacker (LispVal -> ThrowsError a)
+
+unpackEquals :: LispVal -> LispVal -> Unpacker -> ThrowsError Bool
+unpackEquals a1 a2 (AnyUnpacker unpacker) = do
+          unpacked1 <- unpacker a1
+          unpacked2 <- unpacker a2
+          return $ unpacked1 == unpacked2
+        `catchError` (const $ return False)
 
 unpackNum :: LispVal -> ThrowsError Integer
 unpackNum (Number n) = return n
