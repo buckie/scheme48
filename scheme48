@@ -1,1 +1,3 @@
-./dist/build/scheme48/scheme48
+#!/bin/bash
+
+rlwrap "$HOME/repos/scheme48/dist/build/scheme48/scheme48"

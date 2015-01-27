@@ -1,13 +1,11 @@
 module Main where
 
-import Control.Monad (liftM)
-
-import Scheme48.Eval (readExpr, eval)
-import Scheme48.Error (trapError, extractValue)
+import Scheme48.REPL
 import System.Environment
 
 main :: IO ()
-main = do
-  args <- getArgs
-  evaled <- return $ liftM show $ readExpr (args !! 0) >>= eval
-  putStrLn $ extractValue $ trapError evaled
+main = do args <- getArgs
+          case length args of
+               0 -> runRepl
+               1 -> evalAndPrint $ args !! 0
+               _ -> putStrLn "Program takes only 0 or 1 argument"

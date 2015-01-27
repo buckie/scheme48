@@ -1,7 +1,7 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# OPTIONS_GHC -fno-warn-unused-do-bind #-}
 
-module Scheme48.Eval where
+module Scheme48.Eval (readExpr, eval) where
 
 import Scheme48.Error (LispError(..), ThrowsError)
 import Scheme48.Types (LispVal(..))
