@@ -1,10 +1,15 @@
+{-# LANGUAGE ExistentialQuantification #-}
+{-# OPTIONS_GHC -fno-warn-unused-do-bind #-}
 
 module Scheme48.StdLib (
-  primitives
+  primitives,
+  eqv
   ) where
 
+import Scheme48.Error (LispError(..), ThrowsError)
+import Scheme48.Types (LispVal(..))
 
-
+import Control.Monad.Except
 
 -- Primative Operations --
 
