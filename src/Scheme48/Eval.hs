@@ -1,3 +1,4 @@
+{-# LANGUAGE ExistentialQuantification #-}
 {-# OPTIONS_GHC -fno-warn-unused-do-bind #-}
 
 module Scheme48.Eval where
@@ -5,6 +6,7 @@ module Scheme48.Eval where
 import Scheme48.Error (LispError(..), ThrowsError)
 import Scheme48.Types (LispVal(..))
 import Scheme48.Parsers (parseExprs)
+import Scheme48.StdLib (primitives, eqv)
 
 import Control.Monad.Except
 
@@ -12,6 +14,31 @@ import Control.Monad.Except
 
 eval :: LispVal -> ThrowsError LispVal
 eval (List [Atom "quote", val]) = return val
+eval (List [Atom "if", cond, t, f]) =
+                     do result <- eval cond
+                        case result of
+                             Bool False -> eval f
+                             Bool True -> eval t
+                             _ -> throwError $ TypeMismatch "bool" cond
+eval v@(List (Atom "cond" : clauses)) =
+  if null clauses
+  then throwError $ BadSpecialForm "no true clauses found in cond expression: " v
+  else case head clauses of
+            List [Atom "else", expr] -> eval expr
+            List [test, expr] -> eval $ List [Atom "if", test, expr, List (Atom "cond" : tail clauses)]
+            _ -> throwError $ BadSpecialForm "maleformed cond expressioni: " v
+eval v@(List (Atom "case" : key : clauses)) =
+  if null clauses
+  then throwError $ BadSpecialForm "no true clauses or else clause in case expression:" v
+  else case head clauses of
+            List (Atom "else": exprs) -> mapM eval exprs >>= return . last
+            List ((List datums): exprs) -> do
+              result <- eval key
+              equality <- mapM (\x -> eqv [result, x]) datums
+              if Bool True `elem` equality
+              then mapM eval exprs >>= return . last
+              else eval $ List (Atom "case" : key : tail clauses)
+            _ -> throwError $ BadSpecialForm "maleformed case expression: " v
 eval (List (Atom func:args)) = mapM eval args >>= apply func
 eval v@(String _) = return v
 eval v@(Number _) = return v
@@ -35,104 +62,4 @@ readExpr input = case parseExprs input of
     Left err -> throwError $ Parser err
     Right val -> return val
 
--- Primative Operations --
 
-primitives :: [(String, [LispVal] -> ThrowsError LispVal)]
-primitives = [("+", numericBinop (+)),
-              ("-", numericBinop (-)),
-              ("*", numericBinop (*)),
-              ("/", numericBinop div),
-              ("mod", numericBinop mod),
-              ("quotient", numericBinop quot),
-              ("remainder", numericBinop rem),
-              ("bool?",unaryOp boolp),
-              ("symbol?",unaryOp symbolp),
-              ("number?",unaryOp numberp),
-              ("list?",unaryOp listp),
-              ("string?",unaryOp stringp),
-              ("vector?",unaryOp vectorp),
-              ("dottedlist?",unaryOp dottedListp),
-              ("character?",unaryOp characterp),
-              ("float?",unaryOp floatp),
-              ("ratio",unaryOp ratiop),
-              ("complex?",unaryOp complexp),
-              ("string->symbol", unaryOp stringToSymbol),
-              ("symbol->string", unaryOp symbolToString)
-              ]
-
--- Numeric Operations --
-
-numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> ThrowsError LispVal
-numericBinop _ []      = throwError $ NumArgs 2 []
-numericBinop _ s@[_]   = throwError $ NumArgs 2 s
-numericBinop op params = mapM unpackNum params >>= return . Number . foldl1 op
-
-unpackNum :: LispVal -> ThrowsError Integer
-unpackNum (Number n) = return n
-unpackNum (String n) = let parsed = reads n in
-                            if null parsed
-                              then throwError $ TypeMismatch "number" $ String n
-                              else return $ fst $ parsed !! 0
-unpackNum (List [n]) = unpackNum n
-unpackNum notNum     = throwError $ TypeMismatch "number" notNum
-
--- Type Check Operations --
-
-unaryOp :: (LispVal -> LispVal) -> [LispVal] -> ThrowsError LispVal
-unaryOp f [v] = return $ f v
-unaryOp _ [] = throwError $ NumArgs 1 []
-unaryOp _ _ = throwError $ Default "Incorrect application of unary operator"
-
-boolp :: LispVal -> LispVal
-boolp (Bool _) = Bool True
-boolp _ = Bool False
-
-symbolp :: LispVal -> LispVal
-symbolp (Atom _) = Bool True
-symbolp _ = Bool False
-
-numberp :: LispVal -> LispVal
-numberp (Number _) = Bool True
-numberp _ = Bool False
-
-listp :: LispVal -> LispVal
-listp (List _) = Bool True
-listp _ = Bool False
-
-stringp :: LispVal -> LispVal
-stringp (String _) = Bool True
-stringp _ = Bool False
-
-vectorp :: LispVal -> LispVal
-vectorp (Vector _) = Bool True
-vectorp _ = Bool False
-
-dottedListp :: LispVal -> LispVal
-dottedListp (DottedList _ _) = Bool True
-dottedListp _ = Bool False
-
-characterp :: LispVal -> LispVal
-characterp (Character _) = Bool True
-characterp _ = Bool False
-
-floatp :: LispVal -> LispVal
-floatp (Float _) = Bool True
-floatp _ = Bool False
-
-ratiop :: LispVal -> LispVal
-ratiop (Ratio _) = Bool True
-ratiop _ = Bool False
-
-complexp :: LispVal -> LispVal
-complexp (Complex _) = Bool True
-complexp _ = Bool False
-
--- Symbol Conversion Operations --
-
-stringToSymbol :: LispVal -> LispVal
-stringToSymbol (String s) = Atom s
-stringToSymbol _ = Atom ""
-
-symbolToString :: LispVal -> LispVal
-symbolToString (Atom a) = String a
-symbolToString _ = String ""

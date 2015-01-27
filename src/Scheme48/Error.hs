@@ -1,4 +1,3 @@
-
 module Scheme48.Error
   (LispError(..), ThrowsError, trapError, extractValue)
   where
