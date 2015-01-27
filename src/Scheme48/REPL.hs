@@ -1,13 +1,15 @@
 
 module Scheme48.REPL (
   runRepl,
-  evalAndPrint) where
+  runOne) where
 
 import System.IO
 import Control.Monad
 
 import Scheme48.Eval
-import Scheme48.Error
+import Scheme48.Env
+
+-- REPL code --
 
 flushStr :: String -> IO ()
 flushStr str = putStr str >> hFlush stdout
@@ -15,18 +17,19 @@ flushStr str = putStr str >> hFlush stdout
 readPrompt :: String -> IO String
 readPrompt prompt = flushStr prompt >> getLine
 
-evalString :: Monad m => String -> m String
-evalString expr = return $ extractValue $ trapError (liftM show $ readExpr expr >>= eval)
+evalString :: Env -> String -> IO String
+evalString env expr = runIOThrows $ liftM show $ liftThrows (readExpr expr) >>= eval env
 
-evalAndPrint :: String -> IO ()
-evalAndPrint expr = evalString expr >>= putStrLn
+evalAndPrint :: Env -> String -> IO ()
+evalAndPrint env expr = evalString env expr >>= putStrLn
 
 until_ :: Monad m => (t -> Bool) -> m t -> (t -> m a) -> m ()
 until_ pre prompt action = do
   result <- prompt
-  if pre result
-  then return ()
-  else action result >> until_ pre prompt action
+  unless (pre result) $ action result >> until_ pre prompt action
+
+runOne :: String -> IO ()
+runOne expr = nullEnv >>= flip evalAndPrint expr
 
 runRepl :: IO ()
-runRepl = until_ (== "quit") (readPrompt "LISP>>> ") evalAndPrint
+runRepl = nullEnv >>= until_ (== "quit") (readPrompt "LISP>>> ") . evalAndPrint
