@@ -5,9 +5,11 @@ module Scheme48.REPL (
 
 import System.IO
 import Control.Monad
+import Control.Monad.Except
 
-import Scheme48.Eval
 import Scheme48.Error
+import Scheme48.Eval
+-- REPL code --
 
 flushStr :: String -> IO ()
 flushStr str = putStr str >> hFlush stdout

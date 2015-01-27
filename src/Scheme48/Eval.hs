@@ -3,16 +3,17 @@
 
 module Scheme48.Eval (readExpr, eval) where
 
+import Control.Monad.Except
+
 import Scheme48.Error (LispError(..), ThrowsError)
 import Scheme48.Types (LispVal(..))
 import Scheme48.Parsers (parseExprs)
 import Scheme48.StdLib (primitives, eqv)
-
-import Control.Monad.Except
+import Scheme48.REPL hiding (runREPL, evalAndPrint)
 
 -- Evaluation --
 
-eval :: LispVal -> ThrowsError LispVal
+eval :: LispVal -> IOThrowsError LispVal
 eval (List [Atom "quote", val]) = return val
 eval (List [Atom "if", cond, t, f]) =
                      do result <- eval cond
@@ -39,18 +40,23 @@ eval v@(List (Atom "case" : key : clauses)) =
               then mapM eval exprs >>= return . last
               else eval $ List (Atom "case" : key : tail clauses)
             _ -> throwError $ BadSpecialForm "maleformed case expression: " v
-eval (List (Atom func:args)) = mapM eval args >>= apply func
-eval v@(String _) = return v
-eval v@(Number _) = return v
-eval v@(Bool _) = return v
-eval v@(Character _) = return v
-eval v@(Float _) = return v
-eval v@(Atom _) = return v
-eval v@(Ratio _) = return v
-eval v@(Complex _) = return v
-eval v@(Vector _) = return v
-eval v@(DottedList _ _) = return v
-eval badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
+eval env (List (Atom func:args)) = mapM (eval env) args >>= liftThrows . apply func
+eval env (List [Atom "set!", Atom var, form]) =
+     eval env form >>= setVar env var
+eval env (List [Atom "define", Atom var, form]) =
+     eval env form >>= defineVar env var
+eval env (Atom id) = getVar env id
+eval env v@(String _) = return v
+eval env v@(Number _) = return v
+eval env v@(Bool _) = return v
+eval env v@(Character _) = return v
+eval env v@(Float _) = return v
+eval env v@(Atom _) = return v
+eval env v@(Ratio _) = return v
+eval env v@(Complex _) = return v
+eval env v@(Vector _) = return v
+eval env v@(DottedList _ _) = return v
+eval env badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 apply :: String -> [LispVal] -> ThrowsError LispVal
 apply fn args = maybe (throwError $ NotFunction "Unrecognized primative function args" fn)
