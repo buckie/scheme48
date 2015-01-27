@@ -52,7 +52,8 @@ primitives = [("+", numericBinop (+)),
               ("cons", cons),
               ("eq?", eqv),
               ("eqv?", eqv),
-              ("equal?", equal)]
+              ("equal?", equal),
+              ("make-string", makeString)]
 
 car :: [LispVal] -> ThrowsError LispVal
 car [List (x : _ )]         = return x
@@ -224,3 +225,10 @@ strBoolBinop = boolBinop unpackStr
 
 boolBoolBinop :: (Bool -> Bool -> Bool) -> [LispVal] -> ThrowsError LispVal
 boolBoolBinop = boolBinop unpackBool
+
+-- string functions --
+
+makeString :: [LispVal] -> ThrowsError LispVal
+makeString [(Number l), (Character c)] = return $ String $ [c | _ <- [1..l]]
+makeString [(Number l)] = return $ String $ [' ' | _ <- [1..l]]
+makeString args = throwError $ NumArgs 2 args
