@@ -5,8 +5,7 @@ module Scheme48.Eval (readExpr, eval) where
 
 import Control.Monad.Except
 
-import Scheme48.Error (LispError(..), ThrowsError)
-import Scheme48.Types (LispVal(..))
+import Scheme48.Types
 import Scheme48.Parsers (parseExprs)
 import Scheme48.StdLib (primitives, eqv)
 import Scheme48.Env
@@ -57,10 +56,18 @@ eval _ v@(Vector _) = return v
 eval _ v@(DottedList _ _) = return v
 eval _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
-apply :: String -> [LispVal] -> ThrowsError LispVal
-apply fn args = maybe (throwError $ NotFunction "Unrecognized primative function args" fn)
-                      ($ args)
-                      (lookup fn primitives)
+apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
+apply (PrimitiveFunc func) args = liftThrows $ func args
+apply (Func params' varags' body' closure') args =
+  if num params' /= num args && varags' == Nothing
+     then throwError $ NumArgs (num params') args
+     else (liftIO $ bindVars closure' $ zip params' args) >>= bindVarArgs varags' >>= evalBody
+  where remainingArgs = drop (length params') args
+        num = toInteger . length
+        evalBody env = liftM last $ mapM (eval env) body'
+        bindVarArgs arg env = case arg of
+                                    Just argName -> liftIO $ bindVars env [(argName, List $ remainingArgs)]
+                                    Nothing -> return env
 
 readExpr :: String -> ThrowsError LispVal
 readExpr input = case parseExprs input of

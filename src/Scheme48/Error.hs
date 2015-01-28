@@ -2,6 +2,10 @@ module Scheme48.Error
   (trapError, extractValue)
   where
 
+import Control.Monad.Except
+
+import Scheme48.Types (ThrowsError)
+
 trapError :: (MonadError e m, Show e) => m String -> m String
 trapError action = catchError action $ return . show
 

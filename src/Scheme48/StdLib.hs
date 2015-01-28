@@ -6,8 +6,7 @@ module Scheme48.StdLib (
   eqv
   ) where
 
-import Scheme48.Error (LispError(..), ThrowsError)
-import Scheme48.Types (LispVal(..))
+import Scheme48.Types
 
 import Control.Monad.Except
 
@@ -144,7 +143,7 @@ unpackBool notBool = throwError $ TypeMismatch "boolean" notBool
 numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> ThrowsError LispVal
 numericBinop _ []      = throwError $ NumArgs 2 []
 numericBinop _ s@[_]   = throwError $ NumArgs 2 s
-numericBinop op params = mapM unpackNum params >>= return . Number . foldl1 op
+numericBinop op args = mapM unpackNum args >>= return . Number . foldl1 op
 
 -- Type Check Operations --
 
