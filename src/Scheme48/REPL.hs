@@ -6,6 +6,7 @@ module Scheme48.REPL (
 import System.IO
 import Control.Monad
 
+import Scheme48.Types
 import Scheme48.Eval
 import Scheme48.Env
 
@@ -29,7 +30,7 @@ until_ pre prompt action = do
   unless (pre result) $ action result >> until_ pre prompt action
 
 runOne :: String -> IO ()
-runOne expr = nullEnv >>= flip evalAndPrint expr
+runOne expr = primitiveBindings >>= flip evalAndPrint expr
 
 runRepl :: IO ()
-runRepl = nullEnv >>= until_ (== "quit") (readPrompt "LISP>>> ") . evalAndPrint
+runRepl = primitiveBindings >>= until_ (== "quit") (readPrompt "LISP>>> ") . evalAndPrint
