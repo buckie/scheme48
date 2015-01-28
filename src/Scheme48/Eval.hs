@@ -5,10 +5,9 @@ module Scheme48.Eval (readExpr, eval) where
 
 import Control.Monad.Except
 
-import Scheme48.Error (LispError(..), ThrowsError)
-import Scheme48.Types (LispVal(..))
+import Scheme48.Types
 import Scheme48.Parsers (parseExprs)
-import Scheme48.StdLib (primitives, eqv)
+import Scheme48.StdLib (eqv)
 import Scheme48.Env
 
 -- Evaluation --
@@ -42,9 +41,22 @@ eval env v@(List (Atom "case" : key : clauses)) =
             _ -> throwError $ BadSpecialForm "maleformed case expression: " v
 eval env (List [Atom "set!", Atom var, form]) =
      eval env form >>= setVar env var
-eval env (List [Atom "define", Atom var, form]) =
-     eval env form >>= defineVar env var
-eval env (List (Atom func:args)) = mapM (eval env) args >>= liftThrows . apply func
+eval env (List (Atom "define" : List (Atom var : params') : body')) =
+     makeNormalFunc env params' body' >>= defineVar env var
+eval env (List (Atom "define" : DottedList (Atom var : params') varargs : body')) =
+     makeVarArgs varargs env params' body' >>= defineVar env var
+eval env (List [Atom "define", Atom var, body']) =
+     eval env body' >>= defineVar env var
+eval env (List (Atom "lambda" : List params' : body')) =
+     makeNormalFunc env params' body'
+eval env (List (Atom "lambda" : DottedList params' varargs : body')) =
+     makeVarArgs varargs env params' body'
+eval env (List (Atom "lambda" : varargs@(Atom _) : body')) =
+     makeVarArgs varargs env [] body'
+eval env (List (func:args)) = do
+  func' <- eval env func
+  argVals <- mapM (eval env) args
+  apply func' argVals
 eval env (Atom id') = getVar env id'
 eval _ v@(String _) = return v
 eval _ v@(Number _) = return v
@@ -57,10 +69,19 @@ eval _ v@(Vector _) = return v
 eval _ v@(DottedList _ _) = return v
 eval _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
-apply :: String -> [LispVal] -> ThrowsError LispVal
-apply fn args = maybe (throwError $ NotFunction "Unrecognized primative function args" fn)
-                      ($ args)
-                      (lookup fn primitives)
+apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
+apply (PrimitiveFunc (PrimFunc func)) args = liftThrows $ func args
+apply (Func params' varags' body' closure') args =
+  if num params' /= num args && varags' == Nothing
+     then throwError $ NumArgs (num params') args
+     else (liftIO $ bindVars closure' $ zip params' args) >>= bindVarArgs varags' >>= evalBody
+  where remainingArgs = drop (length params') args
+        num = toInteger . length
+        evalBody env = liftM last $ mapM (eval env) body'
+        bindVarArgs arg env = case arg of
+                                    Just argName -> liftIO $ bindVars env [(argName, List $ remainingArgs)]
+                                    Nothing -> return env
+apply form args = liftThrows $ throwError $ NotFunction (show form) (show args)
 
 readExpr :: String -> ThrowsError LispVal
 readExpr input = case parseExprs input of

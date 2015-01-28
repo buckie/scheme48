@@ -1,14 +1,13 @@
 
 module Scheme48.Env (
-  Env,
-  IOThrowsError,
   setVar,
   defineVar,
   liftThrows,
   getVar,
   runIOThrows,
   nullEnv,
-  bindVars) where
+  bindVars,
+  primitiveBindings) where
 
 import Data.IORef
 import Control.Monad
@@ -16,12 +15,9 @@ import Control.Monad.Except
 
 import Scheme48.Error
 import Scheme48.Types
+import Scheme48.StdLib (primitives)
 
 -- State code --
-
-type Env = IORef [(String, IORef LispVal)]
-
-type IOThrowsError = ExceptT LispError IO
 
 nullEnv :: IO Env
 nullEnv = newIORef []
@@ -68,3 +64,7 @@ bindVars envRef bindings = readIORef envRef >>= extendEnv bindings >>= newIORef
         addBinding (var, value) = do
           ref <- newIORef value
           return (var, ref)
+
+primitiveBindings :: IO Env
+primitiveBindings = nullEnv >>= (flip bindVars $ map makePrimitiveFunc primitives)
+  where makePrimitiveFunc (var, func) = (var, PrimitiveFunc $ PrimFunc func)
