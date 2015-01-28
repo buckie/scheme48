@@ -3,7 +3,6 @@
 module Scheme48.Types (
   LispVal(..),
   LispError(..),
-  PrimFunc(..),
   Env,
   ThrowsError,
   IOThrowsError,
@@ -17,14 +16,6 @@ import Data.Array
 import Control.Monad.Except
 
 import Text.ParserCombinators.Parsec
-
--- Ugly hack to get Deriving Eq to work... not sure how to fix this
-
-data PrimFunc = PrimFunc ([LispVal] -> ThrowsError LispVal)
-
-instance Eq PrimFunc where
-  _ == _ = False
-  _ /= _ = True
 
 data LispVal = Atom String
              | List [LispVal]
@@ -41,8 +32,7 @@ data LispVal = Atom String
                     , vararg :: Maybe String
                     , body :: [LispVal]
                     , closure :: Env}
-             | PrimitiveFunc PrimFunc
-             deriving (Eq)
+             | PrimitiveFunc ([LispVal] -> ThrowsError LispVal)
 
 instance Show LispVal where
   show = showVal

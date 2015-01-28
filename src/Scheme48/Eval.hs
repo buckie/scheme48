@@ -7,7 +7,7 @@ import Control.Monad.Except
 
 import Scheme48.Types
 import Scheme48.Parsers (parseExprs)
-import Scheme48.StdLib (primitives, eqv)
+import Scheme48.StdLib (eqv)
 import Scheme48.Env
 
 -- Evaluation --

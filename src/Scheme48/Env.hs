@@ -14,6 +14,7 @@ import Control.Monad.Except
 
 import Scheme48.Error
 import Scheme48.Types
+import Scheme48.StdLib (primitives)
 
 -- State code --
 
@@ -62,3 +63,7 @@ bindVars envRef bindings = readIORef envRef >>= extendEnv bindings >>= newIORef
         addBinding (var, value) = do
           ref <- newIORef value
           return (var, ref)
+
+primitiveBindings :: IO Env
+primitiveBindings = nullEnv >>= (flip bindVars $ map makePrimitiveFunc primitives)
+  where makePrimitiveFunc (var, func) = (var, PrimitiveFunc $ PrimFunc func)
