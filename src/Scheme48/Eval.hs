@@ -41,9 +41,20 @@ eval env v@(List (Atom "case" : key : clauses)) =
             _ -> throwError $ BadSpecialForm "maleformed case expression: " v
 eval env (List [Atom "set!", Atom var, form]) =
      eval env form >>= setVar env var
-eval env (List [Atom "define", Atom var, form]) =
-     eval env form >>= defineVar env var
-eval env (List (Atom func:args)) = mapM (eval env) args >>= liftThrows . apply func
+eval env (List (Atom "define" : DottedList (Atom var : params') varargs : body')) =
+     makeVarArgs varargs env params' body' >>= defineVar env var
+eval env (List (Atom "define" : List (Atom var : params') : body')) =
+     makeNormalFunc env params' body' >>= defineVar env var
+eval env (List (Atom "lambda" : List params' : body')) =
+     makeNormalFunc env params' body'
+eval env (List (Atom "lambda" : DottedList params' varargs : body')) =
+     makeVarArgs varargs env params' body'
+eval env (List (Atom "lambda" : varargs@(Atom _) : body')) =
+     makeVarArgs varargs env [] body'
+eval env (List (func:args)) = do
+  func' <- eval env func
+  argVals <- mapM (eval env) args
+  apply func' argVals
 eval env (Atom id') = getVar env id'
 eval _ v@(String _) = return v
 eval _ v@(Number _) = return v
@@ -57,7 +68,7 @@ eval _ v@(DottedList _ _) = return v
 eval _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
-apply (PrimitiveFunc func) args = liftThrows $ func args
+apply (PrimitiveFunc (PrimFunc func)) args = liftThrows $ func args
 apply (Func params' varags' body' closure') args =
   if num params' /= num args && varags' == Nothing
      then throwError $ NumArgs (num params') args
@@ -68,6 +79,7 @@ apply (Func params' varags' body' closure') args =
         bindVarArgs arg env = case arg of
                                     Just argName -> liftIO $ bindVars env [(argName, List $ remainingArgs)]
                                     Nothing -> return env
+apply form args = liftThrows $ throwError $ NotFunction (show form) (show args)
 
 readExpr :: String -> ThrowsError LispVal
 readExpr input = case parseExprs input of

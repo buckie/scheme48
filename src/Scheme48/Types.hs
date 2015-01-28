@@ -3,10 +3,14 @@
 module Scheme48.Types (
   LispVal(..),
   LispError(..),
+  PrimFunc(..),
   Env,
   ThrowsError,
   IOThrowsError,
-  unwordsList) where
+  unwordsList,
+  makeFunc,
+  makeNormalFunc,
+  makeVarArgs) where
 
 import Numeric ()
 import Data.IORef
@@ -16,6 +20,12 @@ import Data.Array
 import Control.Monad.Except
 
 import Text.ParserCombinators.Parsec
+
+data PrimFunc = PrimFunc ([LispVal] -> ThrowsError LispVal)
+
+instance Eq PrimFunc where
+   _ ==  _ = False
+   _ /=  _ = True
 
 data LispVal = Atom String
              | List [LispVal]
@@ -32,7 +42,8 @@ data LispVal = Atom String
                     , vararg :: Maybe String
                     , body :: [LispVal]
                     , closure :: Env}
-             | PrimitiveFunc ([LispVal] -> ThrowsError LispVal)
+             | PrimitiveFunc PrimFunc
+             deriving (Eq)
 
 instance Show LispVal where
   show = showVal
@@ -56,6 +67,15 @@ showVal (Func {params = args, vararg = varargs, body = _, closure = _}) =
       (case varargs of
          Nothing -> ""
          Just arg -> " . " ++ arg) ++ ") ...)"
+
+makeFunc :: Maybe String -> Env -> [LispVal] -> [LispVal] -> IOThrowsError LispVal
+makeFunc varargs' env' params' body' = return $ Func (map showVal params') varargs' body' env'
+
+makeNormalFunc :: Env -> [LispVal] -> [LispVal] -> IOThrowsError LispVal
+makeNormalFunc = makeFunc Nothing
+
+makeVarArgs :: LispVal -> Env -> [LispVal] -> [LispVal] -> IOThrowsError LispVal
+makeVarArgs = makeFunc . Just . showVal
 
 unwordsList :: [LispVal] -> String
 unwordsList = unwords . map showVal

@@ -6,7 +6,8 @@ module Scheme48.Env (
   getVar,
   runIOThrows,
   nullEnv,
-  bindVars) where
+  bindVars,
+  primitiveBindings) where
 
 import Data.IORef
 import Control.Monad
