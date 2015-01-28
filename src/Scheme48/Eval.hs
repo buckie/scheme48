@@ -71,6 +71,7 @@ eval _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
 apply (PrimitiveFunc (PrimFunc func)) args = liftThrows $ func args
+apply (IOFunc func) args = func args
 apply (Func params' varags' body' closure') args =
   if num params' /= num args && varags' == Nothing
      then throwError $ NumArgs (num params') args
@@ -83,9 +84,13 @@ apply (Func params' varags' body' closure') args =
                                     Nothing -> return env
 apply form args = liftThrows $ throwError $ NotFunction (show form) (show args)
 
-readExpr :: String -> ThrowsError LispVal
-readExpr input = case parseExprs input of
-    Left err -> throwError $ Parser err
+readOrThrow :: Parser a -> String -> ThrowsError a
+readOrThrow parser input = case parse parser "lisp" input of
+    Left err  -> throwError $ Parser err
     Right val -> return val
 
+readExpr :: String -> ThrowsError
+readExpr = readOrThrow parseExpr
 
+readExprList :: String -> ThrowsError
+readExprList = readOrThrow (endBy parseExpr spaces)

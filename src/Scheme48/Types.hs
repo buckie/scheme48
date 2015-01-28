@@ -12,6 +12,7 @@ module Scheme48.Types (
   makeNormalFunc,
   makeVarArgs) where
 
+import System.IO (Handle)
 import Numeric ()
 import Data.IORef
 import Data.Ratio ()
@@ -43,6 +44,8 @@ data LispVal = Atom String
                     , body :: [LispVal]
                     , closure :: Env}
              | PrimitiveFunc PrimFunc
+             | IOFunc PrimFunc
+             | Port Handle
              deriving (Eq)
 
 instance Show LispVal where
@@ -62,6 +65,8 @@ showVal (Ratio r) = show r
 showVal (Complex c) = (show $ realPart c) ++ " + " ++ (show $ imagPart c) ++ "i"
 showVal (Vector v) = "#(" ++ unwordsList (elems v) ++ ")"
 showVal (PrimitiveFunc _) = "<primitive>"
+showVal (Port _)   = "<IO port>"
+showVal (IOFunc _) = "<IO primitive>"
 showVal (Func {params = args, vararg = varargs, body = _, closure = _}) =
    "(lambda (" ++ unwords (map show args) ++
       (case varargs of
