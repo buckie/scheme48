@@ -77,8 +77,6 @@ makeNormalFunc = makeFunc Nothing
 makeVarArgs :: LispVal -> Env -> [LispVal] -> [LispVal] -> IOThrowsError LispVal
 makeVarArgs = makeFunc . Just . showVal
 
-makeBlankFunc env' body'
-
 unwordsList :: [LispVal] -> String
 unwordsList = unwords . map showVal
 
