@@ -1,7 +1,5 @@
 
 module Scheme48.Env (
-  Env,
-  IOThrowsError,
   setVar,
   defineVar,
   liftThrows,
@@ -18,10 +16,6 @@ import Scheme48.Error
 import Scheme48.Types
 
 -- State code --
-
-type Env = IORef [(String, IORef LispVal)]
-
-type IOThrowsError = ExceptT LispError IO
 
 nullEnv :: IO Env
 nullEnv = newIORef []
