@@ -7,11 +7,13 @@ module Scheme48.Types (
   Env,
   ThrowsError,
   IOThrowsError,
+  IOPrimFunc(..),
   unwordsList,
   makeFunc,
   makeNormalFunc,
   makeVarArgs) where
 
+import System.IO (Handle)
 import Numeric ()
 import Data.IORef
 import Data.Ratio ()
@@ -20,6 +22,12 @@ import Data.Array
 import Control.Monad.Except
 
 import Text.ParserCombinators.Parsec
+
+data IOPrimFunc = IOPrimFunc ([LispVal] -> IOThrowsError LispVal)
+
+instance Eq IOPrimFunc where
+   _ ==  _ = False
+   _ /=  _ = True
 
 data PrimFunc = PrimFunc ([LispVal] -> ThrowsError LispVal)
 
@@ -43,6 +51,8 @@ data LispVal = Atom String
                     , body :: [LispVal]
                     , closure :: Env}
              | PrimitiveFunc PrimFunc
+             | IOFunc IOPrimFunc
+             | Port Handle
              deriving (Eq)
 
 instance Show LispVal where
@@ -62,6 +72,8 @@ showVal (Ratio r) = show r
 showVal (Complex c) = (show $ realPart c) ++ " + " ++ (show $ imagPart c) ++ "i"
 showVal (Vector v) = "#(" ++ unwordsList (elems v) ++ ")"
 showVal (PrimitiveFunc _) = "<primitive>"
+showVal (Port _)   = "<IO port>"
+showVal (IOFunc _) = "<IO primitive>"
 showVal (Func {params = args, vararg = varargs, body = _, closure = _}) =
    "(lambda (" ++ unwords (map show args) ++
       (case varargs of
