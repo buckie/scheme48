@@ -6,8 +6,8 @@ module Scheme48.Env (
   getVar,
   runIOThrows,
   nullEnv,
-  bindVars,
-  primitiveBindings) where
+  bindVars
+  ) where
 
 import Data.IORef
 import Control.Monad
@@ -15,7 +15,6 @@ import Control.Monad.Except
 
 import Scheme48.Error
 import Scheme48.Types
-import Scheme48.StdLib (primitives)
 
 -- State code --
 
@@ -64,8 +63,3 @@ bindVars envRef bindings = readIORef envRef >>= extendEnv bindings >>= newIORef
         addBinding (var, value) = do
           ref <- newIORef value
           return (var, ref)
-
-primitiveBindings :: IO Env
-primitiveBindings = nullEnv >>= (flip bindVars $ map (makeFunc IOFunc) ioPrimitives
-                                               ++ map (makeFunc PrimitiveFunc) primitives)
-     where makeFunc constructor (var, func) = (var, constructor func)

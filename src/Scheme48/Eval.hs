@@ -1,18 +1,29 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# OPTIONS_GHC -fno-warn-unused-do-bind #-}
 
-module Scheme48.Eval (readExpr, eval) where
+module Scheme48.Eval (readExpr, eval, primitiveBindings) where
 
 import Control.Monad.Except
+import System.IO
 
 import Scheme48.Types
-import Scheme48.Parsers (parseExprs)
-import Scheme48.StdLib (eqv)
+import Scheme48.Parsers
+import Scheme48.StdLib
 import Scheme48.Env
+
+import Text.ParserCombinators.Parsec hiding (spaces)
+
+-- Bindings --
+primitiveBindings :: IO Env
+primitiveBindings = nullEnv >>= (flip bindVars $ map (makeFunc' $ IOFunc . IOPrimFunc) ioPrimitives
+                                               ++ map (makeFunc' $ PrimitiveFunc . PrimFunc) primitives)
+     where makeFunc' constructor (var, func) = (var, constructor func)
 
 -- Evaluation --
 
 eval :: Env -> LispVal -> IOThrowsError LispVal
+eval env (List [Atom "load", String filename]) =
+       load filename >>= liftM last . mapM (eval env)
 eval _ (List [Atom "quote", val]) = return val
 eval env (List [Atom "if", cond, t, f]) =
                      do result <- eval env cond
@@ -71,7 +82,7 @@ eval _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
 apply (PrimitiveFunc (PrimFunc func)) args = liftThrows $ func args
-apply (IOFunc func) args = func args
+apply (IOFunc (IOPrimFunc func)) args = func args
 apply (Func params' varags' body' closure') args =
   if num params' /= num args && varags' == Nothing
      then throwError $ NumArgs (num params') args
@@ -89,8 +100,55 @@ readOrThrow parser input = case parse parser "lisp" input of
     Left err  -> throwError $ Parser err
     Right val -> return val
 
-readExpr :: String -> ThrowsError
+readExpr :: String -> ThrowsError LispVal
 readExpr = readOrThrow parseExpr
 
-readExprList :: String -> ThrowsError
+readExprList :: String -> ThrowsError [LispVal]
 readExprList = readOrThrow (endBy parseExpr spaces)
+
+-- IO Primatives --
+
+ioPrimitives :: [(String, [LispVal] -> IOThrowsError LispVal)]
+ioPrimitives = [("apply", applyProc),
+                ("open-input-file", makePort ReadMode),
+                ("open-output-file", makePort WriteMode),
+                ("close-input-port", closePort),
+                ("close-output-port", closePort),
+                ("read", readProc),
+                ("write", writeProc),
+                ("read-contents", readContents),
+                ("read-all", readAll)]
+
+applyProc :: [LispVal] -> IOThrowsError LispVal
+applyProc [func, List args] = apply func args
+applyProc (func : args)     = apply func args
+applyProc _                 = error "impossible"
+
+makePort :: MonadIO m => IOMode -> [LispVal] -> m LispVal
+makePort mode [String filename] = liftM Port $ liftIO $ openFile filename mode
+makePort _ _ = error "impossible"
+
+closePort :: MonadIO m => [LispVal] -> m LispVal
+closePort [Port port] = liftIO $ hClose port >> (return $ Bool True)
+closePort _           = return $ Bool False
+
+readProc :: [LispVal] -> ExceptT LispError IO LispVal
+readProc []          = readProc [Port stdin]
+readProc [Port port] = (liftIO $ hGetLine port) >>= liftThrows . readExpr
+readProc _           = error "impossible"
+
+writeProc :: MonadIO m => [LispVal] -> m LispVal
+writeProc [obj]            = writeProc [obj, Port stdout]
+writeProc [obj, Port port] = liftIO $ hPrint port obj >> (return $ Bool True)
+writeProc _                = error "impossible"
+
+readContents :: MonadIO m => [LispVal] -> m LispVal
+readContents [String filename] = liftM String $ liftIO $ readFile filename
+readContents _                 = error "impossible"
+
+load :: FilePath -> ExceptT LispError IO [LispVal]
+load filename = (liftIO $ readFile filename) >>= liftThrows . readExprList
+
+readAll :: [LispVal] -> IOThrowsError LispVal
+readAll [String filename] = liftM List $ load filename
+readAll _                 = error "impossible"
