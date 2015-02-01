@@ -231,3 +231,4 @@ makeString :: [LispVal] -> ThrowsError LispVal
 makeString [(Number l), (Character c)] = return $ String $ [c | _ <- [1..l]]
 makeString [(Number l)] = return $ String $ [' ' | _ <- [1..l]]
 makeString args = throwError $ NumArgs 2 args
+
